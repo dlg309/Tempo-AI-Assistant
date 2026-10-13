@@ -63,6 +63,14 @@ Diagnosed a local signup failure: NEXT_PUBLIC_SUPABASE_URL contained a dashboard
 
 Added configuration validation in the server client/proxy so dashboard URLs and placeholder configuration produce actionable errors. Known signup errors now explain SMTP recipient restrictions, rate limits, password policy, disabled signup/provider and unavailable Auth. Logs include only a sanitized error code/status, never email/password/provider bodies. Added configuration and route tests, including credential-free logging assertions. Type checking, 43 unit tests across 10 suites, and production build passed. Actual account creation still needs the user to restart the dev server and retry with their own credentials.
 
+## Browser-extension hydration follow-up
+
+The reported root-layout hydration warning showed extension-owned `data-gr-*`, `data-qb-installed` and lowercase `suppresshydrationwarning` attributes on html/body. A browser regression that mutates the document response before React loads reproduced the exact warning on both `/` and `/login` before the fix. Added React's shallow `suppressHydrationWarning` only to those two document roots; application descendants keep normal hydration diagnostics and extensions retain their attributes.
+
+The browser suite now includes six hydration checks across desktop/mobile: injected root attributes on both routes hydrate without console warnings and remain present; the UI is interactive; deliberate form attribute mismatches still produce diagnostics. All 10 browser tests (these six plus the four existing planning checks), 43 unit tests, type checking and the production build passed. Tests inject attributes rather than installing actual extensions, and mock workspace responses rather than accessing user records. Chromium's scoped local-network permission is used because intercepted HTML has no remote-address metadata. The initial reused development server stopped during reproduction; the conclusive before/after runs used a fresh test-owned server with `CI=1`.
+
+Reference: [React's shallow hydration-warning escape hatch](https://react.dev/reference/react-dom/client/hydrateRoot#suppressing-unavoidable-hydration-mismatch-errors). This does not disable validation throughout the component tree.
+
 ## Explicit initial-release limits
 
 - The cron handles three due sources per invocation; the daily schedule can create backlog. More sources/users need more frequent compatible scheduling or a queue before promising daily freshness.

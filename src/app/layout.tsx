@@ -6,9 +6,11 @@ export const metadata: Metadata = {
     "Turn your tasks, deadlines and commitments into a realistic plan.",
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
+  // Writing extensions modify these document attributes before React hydrates.
+  // Keep the escape hatch on the roots; descendant mismatches still surface.
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
