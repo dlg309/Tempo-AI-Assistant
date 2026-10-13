@@ -24,6 +24,7 @@ import {
 } from "@/lib/feed-security";
 import { askAssistant } from "@/lib/assistant";
 import { boundedJson, assertOrigin } from "@/lib/http";
+import { signupFailure } from "@/lib/auth-configuration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -277,11 +278,17 @@ export async function POST(
           password: a.password,
           options: { emailRedirectTo: new URL("/auth/callback", base).href },
         });
-        if (r.error)
-          throw new AppError(
-            "Account creation failed. Check your details or try later.",
-            400,
+        if (r.error) {
+          const failure = signupFailure(r.error);
+          console.warn(
+            JSON.stringify({
+              event: "signup_failed",
+              code: failure.code,
+              status: failure.status,
+            }),
           );
+          throw new AppError(failure.message, failure.status);
+        }
         return response({ confirmationRequired: !r.data.session });
       }
       const r = await db.auth.signInWithPassword({

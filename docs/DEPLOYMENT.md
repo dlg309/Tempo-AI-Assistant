@@ -14,6 +14,11 @@ Prepare a new Supabase project and Next.js hosting environment. Nothing in this 
 3. Enable email/password Auth. For local development, set Site URL to `http://localhost:3000` and allow `http://localhost:3000/auth/callback`. If using `127.0.0.1`, register that matching origin/callback too. Keep the standard ConfirmationURL email template so PKCE returns a `code` to the callback. Confirm accounts via email; configure SMTP and Auth abuse controls for a live environment.
 4. For deployed environments, set Site URL to the actual application origin and allow the exact `/auth/callback` URL. Avoid unrestricted production redirect wildcards. Use a separate project/keys for previews.
 5. Copy `.env.example` into `.env.local`; set the URL/publishable key. The service role key is **server-only**, required only for cron and private feed reads. Never prefix it with `NEXT_PUBLIC_`. Restart Next after changing environment values.
+
+   Use the **project API URL**, normally `https://<project-ref>.supabase.co`, not the `supabase.com/dashboard/project/...` URL from the browser address bar. Tempo rejects dashboard URLs with a configuration message before sending Auth requests.
+
+   Supabase's [default email sender](https://supabase.com/docs/guides/auth/auth-smtp) is intended for testing and only sends to organization-member email addresses. Use your Supabase organization-member email for initial testing, or configure custom SMTP for other recipients. Signup now explains known SMTP restrictions, email/request rate limits, password policy and disabled-provider errors without logging email addresses, passwords or raw provider messages.
+
 6. Database types are maintained in `src/lib/database.types.ts`. If generating via Supabase CLI, preserve the RPC arguments and composite response shape (row-returning RPCs explicitly use `.single()`). Refresh the PostgREST schema cache if needed after SQL changes: `NOTIFY pgrst, 'reload schema';`.
 
 The migration uses owner RLS and disallows direct authenticated table writes. Do not disable RLS or use a service-role client for ordinary user operations. Ordinary reads and RPC mutations use verified session cookies and `auth.uid()`. Existing data in the retired database requires a separately reviewed migration; there is no automatic old-account/workspace conversion.

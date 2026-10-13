@@ -57,6 +57,12 @@ No Supabase project credentials, Gemini key, real calendar feed or hosting accou
 
 Follow `docs/DEPLOYMENT.md` using a disposable development Supabase project; apply the migration and exact callback URLs. Then run the opt-in persistence smoke test and manually check two-account isolation, Gemini, a public HTTPS .ics feed, rotation/revocation/ETag and scheduler invocation. No production deployment, database edits, DNS changes, remote pushes, merges or history rewrites were performed.
 
+## Signup setup follow-up
+
+Diagnosed a local signup failure: NEXT_PUBLIC_SUPABASE_URL contained a dashboard webpage URL instead of the project's API origin. Corrected only that ignored .env.local entry, preserving the user's other settings. A read-only request to the derived project API's `/auth/v1/settings` returned HTTP 200 using the configured publishable key: signups enabled, Email provider enabled, email confirmation required. No accounts were created or provider settings changed during diagnosis.
+
+Added configuration validation in the server client/proxy so dashboard URLs and placeholder configuration produce actionable errors. Known signup errors now explain SMTP recipient restrictions, rate limits, password policy, disabled signup/provider and unavailable Auth. Logs include only a sanitized error code/status, never email/password/provider bodies. Added configuration and route tests, including credential-free logging assertions. Type checking, 43 unit tests across 10 suites, and production build passed. Actual account creation still needs the user to restart the dev server and retry with their own credentials.
+
 ## Explicit initial-release limits
 
 - The cron handles three due sources per invocation; the daily schedule can create backlog. More sources/users need more frequent compatible scheduling or a queue before promising daily freshness.

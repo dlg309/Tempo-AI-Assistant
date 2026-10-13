@@ -4,18 +4,22 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
 import { boundedFetch } from "./request-timeout";
+import { supabaseConfigurationError } from "./auth-configuration";
 
 export function configured() {
   return (
-    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    supabaseConfigurationError(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    ) === null
   );
 }
 export async function userClient() {
-  if (!configured())
-    throw new Error(
-      "CONFIGURATION: Set the Supabase URL and publishable key in .env.local.",
-    );
+  const issue = supabaseConfigurationError(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  );
+  if (issue) throw new Error(`CONFIGURATION: ${issue}`);
   const store = await cookies();
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

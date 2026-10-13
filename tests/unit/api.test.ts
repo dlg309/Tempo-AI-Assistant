@@ -5,9 +5,43 @@ vi.mock("../../src/lib/supabase", () => ({
   jobClient: mocks.job,
   userClient: mocks.user,
 }));
-import { GET } from "../../src/app/api/[...path]/route";
+import { GET, POST } from "../../src/app/api/[...path]/route";
 import { generateFeedToken } from "../../src/lib/feed-security";
 afterEach(() => vi.unstubAllEnvs());
+it("signup reports the SMTP restriction without logging email or password", async () => {
+  const email = "private@example.com",
+    password = "private-test-password";
+  mocks.user.mockResolvedValue({
+    auth: {
+      signUp: async () => ({
+        data: { session: null },
+        error: { code: "email_address_not_authorized", status: 400 },
+      }),
+    },
+  });
+  const log = vi.spyOn(console, "warn").mockImplementation(() => {});
+  try {
+    const result = await POST(
+      new Request("https://tempo.example/api/auth", {
+        method: "POST",
+        headers: {
+          origin: "https://tempo.example",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "signup", email, password }),
+      }),
+      { params: Promise.resolve({ path: ["auth"] }) },
+    );
+    expect(result.status).toBe(400);
+    expect((await result.json()).error).toContain("custom SMTP");
+    const logs = JSON.stringify(log.mock.calls);
+    expect(logs).toContain("email_address_not_authorized");
+    expect(logs).not.toContain(email);
+    expect(logs).not.toContain(password);
+  } finally {
+    log.mockRestore();
+  }
+});
 it("private feed supports ETag but always rechecks revocation before returning 304", async () => {
   const { token, hash } = generateFeedToken();
   let active = true;
